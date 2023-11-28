@@ -1,3 +1,5 @@
+# Hosting Stack Docker Compose Configuration
+
 ## Jellyfin Media Server
 
 #### Service Name: jellyfin
