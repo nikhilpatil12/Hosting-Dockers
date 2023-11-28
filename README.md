@@ -7,27 +7,41 @@
 **Image**: lscr.io/linuxserver/jellyfin:latest
 
 **Description**: Self-hosted media server, an alternative to Plex.
+
 **Configuration**:
-PUID and PGID: User and group IDs for permissions (optional).
-TZ: Timezone setting (optional).
-JELLYFIN_PublishedServerUrl: Public URL for Jellyfin (optional).
-Volumes: Persistent storage for configuration and media files.
-Devices: Hardware acceleration for Intel (optional).
-Ports: `8096` for the web GUI, additional optional ports.
-Restart: Restart the service unless explicitly stopped.
+**PUID** and **PGID**: User and group IDs for permissions (optional).
+
+**TZ**: Timezone setting (optional).
+
+**JELLYFIN_PublishedServerUrl**: Public URL for Jellyfin (optional).
+
+**Volumes**: Persistent storage for configuration and media files.
+
+**Devices**: Hardware acceleration for Intel (optional).
+
+**Ports**: `8096` for the web GUI, additional optional ports.
+
+**Restart**: Restart the service unless explicitly stopped.
 
 ## Jellyseerr for Jellyfin requests
 
 #### Service Name: jellyseerr
 
 **Image**: fallenbagel/jellyseerr:latest
+
 **Description**: Handles movie and series requests for Jellyfin.
+
 **Configuration**:
-LOG_LEVEL: Logging level.
-TZ: Timezone setting (optional).
-Volumes: Persistent storage for configuration.
-Ports: `5055` for the web GUI.
-Restart: Restart the service unless explicitly stopped.
+
+**LOG_LEVEL**: Logging level.
+
+**TZ**: Timezone setting (optional).
+
+**Volumes**: Persistent storage for configuration.
+
+**Ports**: `5055` for the web GUI.
+
+**Restart**: Restart the service unless explicitly stopped.
 
 ## FreshRSS for self-hosted RSS articles
 
