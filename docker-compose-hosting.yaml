@@ -1,0 +1,188 @@
+version: "3"
+services:
+
+  # Jellyfin Media Server
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    # Configuration for Jellyfin
+    environment:
+      - PUID=1000 # optional
+      - PGID=1000 # optional
+      - TZ=America/Los_Angeles # optional
+      - JELLYFIN_PublishedServerUrl=jellyfin.example.com # optional
+    # Persistent storage for Jellyfin
+    volumes:
+      - /.jellyfin:/config # Persistent Config
+      - /ssd2/TV:/data/tvshows # optional
+      - /ssd2/Books:/data/books # optional
+      - /ssd2/Movies:/data/movies # optional
+    # Enable Intel HW Acceleration
+    devices:
+      - /dev/dri/:/dev/dri/
+    # Ports for Jellyfin
+    ports:
+      - 8096:8096 # Web GUI
+      - 8920:8920 # optional
+      - 7359:7359/udp # optional
+      - 1900:1900/udp # optional
+    restart: unless-stopped
+
+  # Jellyseerr for Jellyfin requests
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    # Configuration for Jellyseerr
+    environment:
+      - LOG_LEVEL=debug
+      - TZ=America/Los_Angeles # optional
+    # Persistent storage for Jellyseerr
+    volumes:
+      - /.jellyseerr:/app/config # Persistent Config 
+    # Port for Jellyseerr
+    ports:
+      - 5055:5055 # Web GUI
+    restart: unless-stopped
+
+  # FreshRSS for self-hosted RSS articles
+  freshrss:
+    image: lscr.io/linuxserver/freshrss:latest
+    # Configuration for FreshRSS
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Los_Angeles
+    # Persistent storage for FreshRSS
+    volumes:
+      - /.freshrss:/config # Persistent Config 
+    # Port for FreshRSS
+    ports:
+      - 8020:80
+    restart: unless-stopped
+
+  # Full-text RSS extraction for FreshRSS
+  fulltextrss: 
+    image: heussd/fivefilters-full-text-rss:latest
+    # Port for Full-text RSS
+    ports:
+      - 82:80
+    restart: unless-stopped
+
+  # Kavita self-hosted Books
+  kavita: 
+    image: lscr.io/linuxserver/kavita:latest
+    # Configuration for Kavita
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Los_Angeles
+    # Persistent storage for Kavita
+    volumes:
+      - /.kavita:/config
+      - /ssd2/Books:/data
+    # Port for Kavita
+    ports:
+      - 5000:5000
+    restart: unless-stopped
+
+  # Audiobookshelf for self-hosted Audiobooks
+  audiobookshelf: 
+    container_name: audiobookshelf
+    image: ghcr.io/advplyr/audiobookshelf:latest
+    # Configuration for Audiobookshelf
+    environment:
+      - TZ=America/Los_Angeles
+    # Persistent storage for Audiobookshelf
+    volumes:
+      - /ssd2/Audiobooks:/audiobooks
+      - /ssd2/podcasts:/podcasts
+      - /.audiobookshelf:/config
+      - /.absmetadata:/metadata
+    # Port for Audiobookshelf
+    ports:
+      - 8090:80
+    restart: unless-stopped
+
+  # Invidious for self-hosted YouTube
+  invidious:
+    container_name: invidious
+    image: quay.io/invidious/invidious:latest
+    # Configuration for Invidious
+    environment:
+      INVIDIOUS_CONFIG: |
+        db:
+          dbname: invidious
+          user: invidious
+          password: invidious@1
+          host: invidious-db
+          port: 5432
+        check_tables: true
+        domain: example.com
+        host_binding: 0.0.0.0
+        statistics_enabled: false
+        hmac_key: "nee9Koo1faa3caicoot3"
+    # Healthcheck for Invidious
+    healthcheck:
+      test: wget -nv --tries=1 --spider http://127.0.0.1:3000/api/v1/comments/jNQXAC9IVRw || exit 1
+      interval: 30s
+      timeout: 5s
+      retries: 2
+    # Logging options for Invidious
+    logging:
+      options:
+        max-size: "1G"
+        max-file: "4"
+    depends_on:
+      - invidious-db
+
+  # Database for Invidious
+  invidious-db:
+    container_name: invidious-db
+    image: docker.io/library/postgres:14
+    # Configuration for Invidious Database
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+      - ./config/sql:/config/sql
+      - ./docker/init-invidious-db.sh:/docker-entrypoint-initdb.d/init-invidious-db.sh
+    environment:
+      POSTGRES_DB: invidious
+      POSTGRES_USER: invidious
+      POSTGRES_PASSWORD: invidious@1
+    # Healthcheck for Invidious Database
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+
+  # MySQL Database for Nextcloud
+  mysqlnextcloud:
+    restart: unless-stopped
+    image: mysql:8.0
+    hostname: mysqlnextcloud
+    container_name: mysqlnextcloud
+    # Persistent storage for MySQL Nextcloud
+    volumes:
+      - /.mysqlnextcloud:/var/lib/mysql
+    # Configuration for MySQL Nextcloud
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nextcloud
+      MYSQL_PASSWORD: NextCloud11@
+
+  # Nextcloud
+  nextcloud:
+    image: lscr.io/linuxserver/nextcloud:latest
+    # Configuration for Nextcloud
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Los_Angeles
+    # Persistent storage for Nextcloud
+    volumes:
+      - /.nextcloud:/config
+      - /ssd2/nextcloud:/data
+    # Port for Nextcloud
+    ports:
+      - 1443:443
+    restart: unless-stopped
+
+# Define volumes
+volumes:
+  postgresdata:

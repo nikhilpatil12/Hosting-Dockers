@@ -1,0 +1,133 @@
+# Docker Compose Configuration for Various Services
+
+version: "2"
+
+services:
+
+  # Dashy Service
+  dashy:
+    image: lissy93/dashy
+    container_name: dashy
+    ports:
+      - 8888:80 # Mapping host port 8888 to container port 80
+    volumes:
+      - /.dashy/conf.yml:/app/public/conf.yml # Mounting configuration file
+      - /.dashy/icons:/app/public/item-icons # Mounting icons directory
+    restart: unless-stopped # Restart policy
+
+  # Glances Service
+  glances:
+    image: nicolargo/glances:latest-full
+    container_name: glances
+    ports:
+      - 61208:61208 # Glances web UI port
+      - 61209:61209 # Glances streaming port
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Allowing access to Docker socket
+    environment:
+      - GLANCES_OPT=-w # Glances options
+      - PUID=1000 # User ID for file permissions
+      - PGID=1000 # Group ID for file permissions
+      - TZ=America/Los_Angeles # Timezone configuration
+    restart: unless-stopped # Restart policy
+
+  # Uptime-Kuma Service
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    ports:
+      - 3001:3001 # Uptime-Kuma web UI port
+    volumes:
+      - /.kuma:/app/data # Mounting data directory
+    restart: unless-stopped # Restart policy
+
+  # Flaresolverr Service
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - TZ=America/Los_Angeles # Timezone configuration
+    ports:
+      - 8191:8191 # Flaresolverr port
+    restart: unless-stopped # Restart policy
+
+  # AdGuard Home Service
+  adguardhome:
+    image: adguard/adguardhome:latest
+    container_name: adguardhome
+    volumes:
+      - /.adguardwork:/opt/adguardhome/work # AdGuard Home work directory
+      - /.adguardconf:/opt/adguardhome/conf # AdGuard Home configuration directory
+    ports:
+      - 53:53/tcp # DNS port
+      - 53:53/udp # DNS port (UDP)
+      - 86:80/tcp # AdGuard Home web UI port
+      - 3000:3000/tcp # AdGuard Home API port
+    restart: unless-stopped # Restart policy
+
+  # Your_Spotify Service
+  your_spotify:
+    image: lscr.io/linuxserver/your_spotify:latest
+    container_name: your_spotify
+    environment:
+      - PUID=1000 # User ID for file permissions
+      - PGID=1000 # Group ID for file permissions
+      - TZ=America/Los_Angeles # Timezone configuration
+      - APP_URL=https://spotify.example.com # Spotify app URL
+      - SPOTIFY_PUBLIC=2acbb5d42e094deeb2d44bf98a38deb6 # Spotify public key
+      - SPOTIFY_SECRET=7b0ebc5fa0ea4a3fb4a19d29aaa17e1e # Spotify secret key
+      - CORS=all # Enable Cross-Origin Resource Sharing
+      - MONGO_ENDPOINT=mongodb://mongo:27017/your_spotify # MongoDB endpoint
+    ports:
+      - 85:80 # Mapping host port 85 to container port 80
+      - 445:443 # Mapping host port 445 to container port 443
+    restart: unless-stopped # Restart policy
+
+  # MongoDB Service
+  mongo:
+    container_name: mongo
+    image: mongo
+    restart: always # Restart policy
+    volumes:
+      - /.your_spotify_db:/data/db # MongoDB data directory
+
+  # MySQL Service
+  mysql:
+    restart: unless-stopped # Restart policy
+    image: mysql:8.0
+    hostname: mysql
+    volumes:
+      - /.mysqlsema:/var/lib/mysql # MySQL data directory
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+      MYSQL_DATABASE: semaphore
+      MYSQL_USER: semaphore
+      MYSQL_PASSWORD: semaphore
+
+  # Semaphore Service
+  semaphore:
+    container_name: semaphore
+    restart: unless-stopped # Restart policy
+    ports:
+      - 3030:3000 # Semaphore web UI port
+    image: ghcr.io/imagegenius/semaphore:latest
+    environment:
+      TZ: America/Los_Angeles # Timezone configuration
+      ANSIBLE_HOST_KEY_CHECKING: False
+      SEMAPHORE_DB_USER: semaphore
+      SEMAPHORE_DB_PASS: semaphore
+      SEMAPHORE_DB_HOST: mysql # MySQL database host
+      SEMAPHORE_DB_PORT: 3306 # MySQL database port
+      SEMAPHORE_DB_DIALECT: mysql # Database dialect
+      SEMAPHORE_DB: semaphore
+      SEMAPHORE_PLAYBOOK_PATH: /tmp/semaphore/
+      SEMAPHORE_ADMIN_PASSWORD: Admin@123
+      SEMAPHORE_ADMIN_NAME: admin
+      SEMAPHORE_ADMIN_EMAIL: admin@example.com
+      SEMAPHORE_ADMIN: admin
+      SEMAPHORE_ACCESS_KEY_ENCRYPTION: gs72mPntFATGJs9qK0pQ0rKtfidlexiMjYCH9gWKhTU= # Access key encryption
+    depends_on:
+      - mysql # Dependency on MySQL service
+
+volumes:
+  uptime-kuma: # Uptime-Kuma volume

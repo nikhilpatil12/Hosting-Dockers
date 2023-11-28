@@ -1,0 +1,186 @@
+# Docker Compose File for Media and Download Services
+
+version: "2"
+services:
+
+  # Radarr Service for Movie Management
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=1000                 # User ID for file permissions
+      - PGID=1000                 # Group ID for file permissions
+      - TZ=America/Los_Angeles    # Timezone configuration
+    volumes:
+      - /.radarr:/config          # Persistent storage for Radarr configuration
+      - /ssd2/Movies:/movies       # Movie library path
+      - /ssd3/Movies:/movies2      # Additional movie library path
+      - /Downloads:/downloads      # General downloads directory
+      - /ssd2/Downloads:/downloads2  # Additional downloads directory
+      - /ssd3/Downloads:/downloads3  # Additional downloads directory
+    ports:
+      - 7878:7878                 # Radarr web UI port
+    restart: unless-stopped       # Restart policy
+
+  # Sonarr Service for TV Series Management
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=1000                 # User ID for file permissions
+      - PGID=1000                 # Group ID for file permissions
+      - TZ=America/Los_Angeles    # Timezone configuration
+    volumes:
+      - /.sonarr:/config          # Persistent storage for Sonarr configuration
+      - /ssd2/TV:/tv               # TV series library path
+      - /ssd3/TV:/tv2              # Additional TV series library path
+      - /Downloads:/downloads      # General downloads directory
+      - /ssd2/Downloads:/downloads2  # Additional downloads directory
+      - /ssd3/Downloads:/downloads3  # Additional downloads directory
+    ports:
+      - 8989:8989                 # Sonarr web UI port
+    restart: unless-stopped       # Restart policy
+
+  # Prowlarr Service for Movie and TV Series Indexer
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=1000                 # User ID for file permissions
+      - PGID=1000                 # Group ID for file permissions
+      - TZ=America/Los_Angeles    # Timezone configuration
+    volumes:
+      - /.prowlarr:/config        # Persistent storage for Prowlarr configuration
+    ports:
+      - 9696:9696                 # Prowlarr web UI port
+    restart: unless-stopped       # Restart policy
+
+  # Bazarr Service for Subtitle Management
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    environment:
+      - PUID=1000                 # User ID for file permissions
+      - PGID=1000                 # Group ID for file permissions
+      - TZ=America/Los_Angeles    # Timezone configuration
+    volumes:
+      - /.bazarr:/config          # Persistent storage for Bazarr configuration
+      - /ssd2/Movies:/movies       # Movie library path
+      - /ssd2/TV:/tv               # TV series library path
+      - /ssd3/Movies:/movies2      # Additional movie library path
+      - /ssd3/TV:/tv2              # Additional TV series library path
+    ports:
+      - 6767:6767                 # Bazarr web UI port
+    restart: unless-stopped       # Restart policy
+
+  # Readarr Service for eBook Management
+  readarr:
+    image: lscr.io/linuxserver/readarr:develop
+    container_name: readarr
+    environment:
+      - PUID=1000                 # User ID for file permissions
+      - PGID=1000                 # Group ID for file permissions
+      - TZ=America/Los_Angeles    # Timezone configuration
+    volumes:
+      - /.readarr:/config         # Persistent storage for Readarr configuration
+      - /Downloads:/downloads      # General downloads directory
+      - /ssd2/Downloads:/downloads2  # Additional downloads directory
+      - /ssd3/Downloads:/downloads3  # Additional downloads directory
+      - /ssd2/Books:/books         # eBook library path
+      - /ssd3/Books:/books2        # Additional eBook library path
+    ports:
+      - 8787:8787                 # Readarr web UI port
+    restart: unless-stopped       # Restart policy
+
+  # Speakarr Service for Audiobook Management
+  speakarr:
+    image: lscr.io/linuxserver/readarr:develop
+    container_name: speakarr
+    environment:
+      - PUID=1000                 # User ID for file permissions
+      - PGID=1000                 # Group ID for file permissions
+      - TZ=America/Los_Angeles    # Timezone configuration
+    volumes:
+      - /.speakarr:/config        # Persistent storage for Speakarr configuration
+      - /Downloads:/downloads      # General downloads directory
+      - /ssd2/Downloads:/downloads2  # Additional downloads directory
+      - /ssd3/Downloads:/downloads3  # Additional downloads directory
+      - /ssd2/Audiobooks:/audiobooks  # Audiobook library path
+    ports:
+      - 7676:8787                 # Speakarr web UI port
+    restart: unless-stopped       # Restart policy
+
+  # qBittorrent Service for Torrent Downloads
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - PUID=1000                 # User ID for file permissions
+      - PGID=1000                 # Group ID for file permissions
+      - TZ=America/Los_Angeles    # Timezone configuration
+      - WEBUI_PORT=8080            # qBittorrent web UI port
+    volumes:
+      - /.qbittorrent:/config     # Persistent storage for qBittorrent configuration
+      - /Downloads:/downloads      # General downloads directory
+      - /ssd2/Downloads:/downloads2  # Additional downloads directory
+      - /ssd3/Downloads:/downloads3  # Additional downloads directory
+    ports:
+      - 8080:8080                 # qBittorrent web UI port
+      - 6881:6881                 # qBittorrent listening port
+      - 6881:6881/udp             # qBittorrent UDP listening port
+    restart: unless-stopped       # Restart policy
+  
+  # NZBGet Service for Usenet Downloads
+  nzbget:
+    image: lscr.io/linuxserver/nzbget:latest
+    container_name: nzbget
+    environment:
+      - PUID=1000                 # User ID for file permissions
+      - PGID=1000                 # Group ID for file permissions
+      - TZ=America/Los_Angeles    # Timezone configuration
+      - NZBGET_USER=nzb        # NZBGet username
+      - NZBGET_PASS=Nzb@1     # NZBGet password
+    volumes:
+      - /.nzbget:/config           # Persistent storage for NZBGet configuration
+      - /Downloads:/downloads      # General downloads directory
+      - /ssd2/Downloads:/downloads2  # Additional downloads directory
+      - /ssd3/Downloads:/downloads3  # Additional downloads directory
+    ports:
+      - 6789:6789                 # NZBGet web UI port
+    restart: unless-stopped       # Restart policy
+    
+  # Transmission Service for Torrent Downloads
+  transmission:
+    image: lscr.io/linuxserver/transmission:latest
+    container_name: transmission
+    environment:
+      - PUID=1000                 # User ID for file permissions
+      - PGID=1000                 # Group ID for file permissions
+      - TZ=America/Los_Angeles    # Timezone configuration
+      - USER=transmission               # Transmission username
+      - PASS=transmission@1            # Transmission password
+    volumes:
+      - /.transmission:/config    # Persistent storage for Transmission configuration
+      - /Downloads:/downloads      # General downloads directory
+    ports:
+      - 9091:9091                 # Transmission web UI port
+      - 51413:51413               # Transmission listening port
+      - 51413:51413/udp           # Transmission UDP listening port
+    restart: unless-stopped       # Restart policy
+
+  # Deluge Service for Torrent Downloads
+  deluge:
+    image: lscr.io/linuxserver/deluge:latest
+    container_name: deluge
+    environment:
+      - PUID=1000                 # User ID for file permissions
+      - PGID=1000                 # Group ID for file permissions
+      - TZ=America/Los_Angeles    # Timezone configuration
+    volumes:
+      - /.deluge:/config           # Persistent storage for Deluge configuration
+      - /Downloads:/downloads      # General downloads directory
+    ports:
+      - 8112:8112                 # Deluge web UI port
+      - 6881:6881                 # Deluge listening port
+      - 6881:6881/udp             # Deluge UDP listening port
+    restart: unless-stopped       # Restart policy

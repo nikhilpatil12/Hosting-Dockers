@@ -1,0 +1,62 @@
+# Docker Compose File for Monitoring Stack
+
+version: "3"
+
+services:
+
+  # Grafana Service
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    ports:
+      - "3010:3000"  # Mapping Grafana's port 3000 to host's port 3010
+    environment:
+      - GF_SERVER_ROOT_URL=https://grafana.example.com/  # Setting Grafana's root URL
+    volumes:
+      - grafana-data:/var/lib/grafana  # Persistent storage for Grafana data
+    restart: unless-stopped  # Restart policy for the Grafana service
+
+  # Prometheus Service
+  prometheus:
+    image: prom/prometheus:v2.37.9
+    container_name: prometheus
+    ports:
+      - 9090:9090  # Mapping Prometheus's port 9090 to host's port 9090
+    volumes:
+      - /.prometheusconf:/etc/prometheus  # Prometheus configuration files
+      - prometheus-data:/prometheus  # Persistent storage for Prometheus data
+    restart: unless-stopped  # Restart policy for the Prometheus service
+
+  # cAdvisor Service
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    container_name: cadvisor
+    ports:
+      - 8082:8080  # Mapping cAdvisor's port 8080 to host's port 8082
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices:
+      - /dev/kmsg
+    privileged: true  # Allowing privileged access for cAdvisor
+    restart: unless-stopped  # Restart policy for the cAdvisor service
+
+  # Node Exporter Service
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:v1.5.0
+    container_name: node_exporter
+    command: "--path.rootfs=/host"  # Specifying path to root filesystem
+    pid: host  # Using host PID namespace
+    restart: unless-stopped  # Restart policy for the Node Exporter service
+    volumes:
+      - /:/host:ro,rslave  # Mounting host root filesystem for metrics collection
+
+volumes:
+  grafana-data:
+    driver: local  # Local driver for Grafana data volume
+  prometheus-data:
+    driver: local  # Local driver for Prometheus data volume
+
