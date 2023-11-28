@@ -5,6 +5,7 @@
 #### Service Name: jellyfin
 
 **Image**: lscr.io/linuxserver/jellyfin:latest
+
 **Description**: Self-hosted media server, an alternative to Plex.
 **Configuration**:
 PUID and PGID: User and group IDs for permissions (optional).
